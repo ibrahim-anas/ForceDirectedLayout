@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class ForceDirectedLayout : MonoBehaviour
 {
+    public float desiredDistance = 1;
+    public float connectedNodeForce = 1;
 
     public List<Node> nodes;
 
@@ -22,9 +24,27 @@ public class ForceDirectedLayout : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        ApplyForce();
+
         foreach (var node in nodes)
         {
             node.position += node.velocity * Time.deltaTime;
+        }
+    }
+
+    private void ApplyForce()
+    {
+        foreach(var node in nodes)
+        {
+            var disconnectedNodes = nodes.Except(node.children); 
+
+            foreach (var connectedNode in node.children)
+            {
+                var difference = node.position - connectedNode.position;
+                var distance = difference.magnitude;
+                var appliedForce = connectedNodeForce * Mathf.Log10(distance / desiredDistance);
+                connectedNode.velocity += appliedForce * Time.deltaTime * difference.normalized;
+            }
         }
     }
 
