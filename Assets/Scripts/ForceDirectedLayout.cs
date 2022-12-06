@@ -7,7 +7,7 @@ public class ForceDirectedLayout : MonoBehaviour
 {
     public float desiredDistance = 1;
     public float connectedNodeForce = 1;
-
+    public float disconnectedNodeForce = 1;
     public List<Node> nodes;
 
     // Start is called before the first frame update
@@ -44,6 +44,17 @@ public class ForceDirectedLayout : MonoBehaviour
                 var distance = difference.magnitude;
                 var appliedForce = connectedNodeForce * Mathf.Log10(distance / desiredDistance);
                 connectedNode.velocity += appliedForce * Time.deltaTime * difference.normalized;
+            }
+            foreach (var disconnectedNode in disconnectedNodes)
+            {
+                var difference = node.position - disconnectedNode.position;
+                var distance = difference.magnitude;
+                if (distance != 0)
+                {
+                    var appliedForce = disconnectedNodeForce / Mathf.Pow(distance, 2);
+                    disconnectedNode.velocity += appliedForce * Time.deltaTime * difference.normalized;
+                }
+                
             }
         }
     }
