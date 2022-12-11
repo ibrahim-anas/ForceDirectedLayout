@@ -8,7 +8,11 @@ public class ForceDirectedLayout : MonoBehaviour
     public float desiredDistance = 1;
     public float connectedNodeForce = 1;
     public float disconnectedNodeForce = 1;
+    public float speed = .002f;
     public List<Node> nodes;
+    private Vector3 mOffset;
+    private float mZCoord;
+  
 
     // Start is called before the first frame update
     void Start()
@@ -18,7 +22,11 @@ public class ForceDirectedLayout : MonoBehaviour
         for (int i = 0; i < 20; i++)
         {
             nodes.Add(new Node() { children = nodes.Where(node => Random.value > 0.5f).ToList(), position = Random.insideUnitSphere * 10, velocity = Vector3.zero }); 
-        }
+            
+            Material newMaterial = new Material(Shader.Find("VertexLit"));
+            nodes[i].dataPt.GetComponent<Renderer>().material = newMaterial;
+            nodes[i].dataPt.gameObject.SetActive(true);
+        }   
     }
 
     // Update is called once per frame
@@ -28,11 +36,19 @@ public class ForceDirectedLayout : MonoBehaviour
 
         foreach (var node in nodes)
         {
-            node.position += node.velocity * Time.deltaTime;
+            node.position += (node.velocity * speed) * Time.deltaTime;
+            node.dataPt.transform.position = node.position;
+            
         }
+        
     }
 
-    private void ApplyForce()
+    private Vector3 GetMouseWorldPos()
+    {
+        return Camera.main.ScreenToWorldPoint(Input.mousePosition);
+    }
+
+    void ApplyForce()
     {
         foreach(var node in nodes)
         {
@@ -58,14 +74,41 @@ public class ForceDirectedLayout : MonoBehaviour
             }
         }
     }
+    void OnMouseDown(){
+        foreach (var node in nodes)
+        {
+            mZCoord = Camera.main.WorldToScreenPoint(node.dataPt.transform.position).z;
+            mOffset = node.dataPt.transform.position - GetMouseAsWorldPoint();
+        }
+    }
+    private Vector3 GetMouseAsWorldPoint()
+
+    {
+
+        Vector3 mousePoint = Input.mousePosition;
+        mousePoint.z = mZCoord;
+        return Camera.main.ScreenToWorldPoint(mousePoint);
+
+    }
+
+    void OnMouseDrag()
+
+    {
+
+        transform.position = GetMouseAsWorldPoint() + mOffset;
+
+    }
+
+
+ 
 
     void OnDrawGizmos()
     {
         foreach (var node in nodes)
         {
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(node.position, 0.125f);
-            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(node.position, 0.5f);
+            Gizmos.color = Color.blue;
 
             foreach (var connectedNode in node.children)
             {
@@ -77,6 +120,7 @@ public class ForceDirectedLayout : MonoBehaviour
 
 public class Node
 {
+    public GameObject dataPt = GameObject.CreatePrimitive(PrimitiveType.Sphere);
     public Vector3 position;
     public Vector3 velocity;
     public List<Node> children;
